@@ -20,6 +20,7 @@ nltk
 mlxtend>=0.17.0 
 pyod 
 pandas-profiling>=2.8.0 
+streamlit-pandas-profiling==0.1.3
 kmodes>=0.10.1 
 mlflow 
 imbalanced-learn==0.7.0 
