@@ -34,7 +34,7 @@ pycaret_models = ['lr','knn','nb','dt','svm','rbfsvm','gpc','mlp','ridge','rf','
 
 
 st.title("[Auto]ML")
-tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["Upload", "Data Profiling", "Data Preprocessing", "Classification", "Fine-Tune Model", "Clustering"])
+tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(["Upload", "Data Profiling", "Data Preprocessing", "Classification", "Regression", "Fine-Tune Model", "Clustering"])
 
 if os.path.exists('./dataset.csv'): 
     df = pd.read_csv('dataset.csv', index_col=None)
@@ -189,9 +189,12 @@ with tab4:
         # Table of parameters
         #st.pyplot(class_plot_model(best_model, plot = 'parameter', display_format='streamlit'))
 
-
-
 with tab5:
+    st. header('Regression')
+    st.info('Coming Soon...Till then, enjoy this picture of an owl')
+    st.image("https://static.streamlit.io/examples/owl.jpg", width=200)
+
+with tab6:
     st.header("Fine-Tune Model")
     # Show table of all models available
     # st.subheader('Models available:')
@@ -250,7 +253,7 @@ with tab5:
         # class_interpret_model(tuned_model)
     
 
-with tab6:
+with tab7:
     st.header("Clustering")
     selected_cols = st.multiselect('Select features to remove for clustering', df.columns)
     chosen_clust_model = st.selectbox('This is the clustering settings', ('kmeans', 'ap', 'meanshift', 'sc', 'hclust', 'dbscan', 'optics', 'birch', 'kmodes'))
@@ -288,3 +291,4 @@ with tab6:
 # st.image("https://static.streamlit.io/examples/dog.jpg", width=200)
 
 #streamlit run app.py
+  
