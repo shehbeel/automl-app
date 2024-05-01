@@ -9,6 +9,7 @@ from streamlit_pandas_profiling import st_profile_report
 import plotly.express as px
 from sklearn.decomposition import PCA
 from umap.umap_ import UMAP
+from sklearn.manifold import TSNE
 
 # PyCaret
 from pycaret.classification import setup as class_setup
@@ -106,7 +107,7 @@ with tab3:
     feature_select_threshold_result = st.slider('Select Feature Selection Threshold:', min_value=0.0, max_value=1.0, value=0.8)
     ilv_result = st.checkbox('Ignore Low Variance Features')
     if st.button('Preprocess the Data'): 
-        class_setup(df, target=chosen_target, silent=True, 
+        class_setup(df, target=chosen_target, #silent=True, 
                     data_split_stratify=stratify_result,
                     fold_strategy=fold_strat_result,
                     fold=chosen_kfold, 
@@ -117,12 +118,12 @@ with tab3:
                     transformation=transform_result,
                     transformation_method=transform_method_result,
                     numeric_imputation=imputation_type_result,
-                    ignore_low_variance = ilv_result,
+                    #ignore_low_variance = ilv_result,
                     ignore_features=ignore_features_result,
                     remove_outliers=remove_outliers_result,
                     outliers_threshold=outliers_threshold_result,
                     feature_selection=feature_select_result,
-                    feature_selection_threshold=feature_select_threshold_result, 
+                    #feature_selection_threshold=feature_select_threshold_result, 
                     feature_selection_method=feature_select_method_result,        
                     fix_imbalance=fix_imbalance_result, 
                     profile=True, 
@@ -158,15 +159,15 @@ with tab3:
 
         # t-SNE Plot
         # Initialize t-SNE object
-        # tsne = TSNE(n_components=2, random_state=0, learning_rate='auto')
+        tsne = TSNE(n_components=2, random_state=0, learning_rate='auto')
         # Fit and transform the data
-        # proj_tsne = tsne.fit_transform(_df)
+        proj_tsne = tsne.fit_transform(_df)
         # Plot t-SNE plot
-        # tsne_fig = px.scatter(proj_tsne, x=0, y=1, title='t-SNE Plot', color=class_labels)
+        tsne_fig = px.scatter(proj_tsne, x=0, y=1, title='t-SNE Plot', color=class_labels)
         # Display t-SNE plot on Streamlit
-        # st.plotly_chart(tsne_fig, 
-        #                 theme="streamlit", 
-        #                 use_container_width=True)
+        st.plotly_chart(tsne_fig, 
+                        theme="streamlit", 
+                        use_container_width=True)
 
         # PCA PLot
         # Initialize PCA object
@@ -239,7 +240,7 @@ with tab4:
 
 
         # PyCaret Plots
-        st.set_option('deprecation.showfileUploaderEncoding', False)
+        #st.set_option('deprecation.showfileUploaderEncoding', False)
         st.set_option('deprecation.showPyplotGlobalUse', False)
         st.set_option('client.showErrorDetails', False)
 
@@ -365,7 +366,8 @@ with tab7:
     chosen_clust_model = st.selectbox('This is the clustering settings', ('kmeans', 'ap', 'meanshift', 'sc', 'hclust', 'dbscan', 'optics', 'birch', 'kmodes'))
     chosen_num_clusters = st.number_input('Select number of clusters, k', min_value=1, step=1)
     if st.button('Start Clustering!'): 
-        clust_setup(df, normalize=True, ignore_features=selected_cols, silent=True, session_id=123)
+        clust_setup(df, normalize=True, ignore_features=selected_cols, #silent=True, 
+                    session_id=123)
         clust_setup_df = clust_pull()
         st.caption('This is the clustering settings')
         st.dataframe(clust_setup_df)
@@ -399,4 +401,3 @@ with tab7:
 
 # streamlit run app_v1.py
 
-  
