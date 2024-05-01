@@ -1,40 +1,60 @@
+# Import packages
 import streamlit as st
 import os
-import pandas as pd
-import pandas_profiling
-from streamlit_pandas_profiling import st_profile_report
-import plotly.express as px
 import pickle
-import xgboost
-#from pycaret.classification import setup, compare_models, pull, save_model, load_model, plot_model, evaluate_model
+import pandas as pd
+from ydata_profiling import ProfileReport #OLD: import pandas_profiling
+from streamlit_pandas_profiling import st_profile_report
+
+import plotly.express as px
+from sklearn.decomposition import PCA
+from umap.umap_ import UMAP
+
+# PyCaret
 from pycaret.classification import setup as class_setup
-from pycaret.classification import compare_models as class_compare_models
 from pycaret.classification import pull as class_pull
-from pycaret.classification import save_model as class_save_model
-from pycaret.classification import load_model as class_load_model
-from pycaret.classification import plot_model as class_plot_model
+from pycaret.classification import compare_models as class_compare_models
+from pycaret.classification import finalize_model as class_finalize_model
 from pycaret.classification import evaluate_model as class_evaluate_model
+from pycaret.classification import plot_model as class_plot_model
 from pycaret.classification import create_model as class_create_model
 from pycaret.classification import tune_model as class_tune_model
-from pycaret.classification import finalize_model as class_finalize_model
 from pycaret.classification import predict_model as class_predict_model
-#from pycaret.classification import get_leaderboard as class_get_leaderboard
-#from pycaret.classification import interpret_model as class_interpret_model
 
-#from pycaret.classification import models as class_models
+from pycaret.regression import compare_models as reg_compare_models
+from pycaret.regression import pull as reg_pull
+from pycaret.regression import finalize_model as reg_finalize_model
 
-#from pycaret.clustering import *
 from pycaret.clustering import setup as clust_setup
 from pycaret.clustering import pull as clust_pull
 from pycaret.clustering import create_model as clust_create_model
 from pycaret.clustering import assign_model as clust_assign_model
 from pycaret.clustering import plot_model as clust_plot_model
 
-pycaret_models = ['lr','knn','nb','dt','svm','rbfsvm','gpc','mlp','ridge','rf','qda','ada','gbc','lda','et','xgboost','lightgbm','catboost']
+
+clf_models = ['lr','knn','nb','dt','svm','rbfsvm','gpc','mlp','ridge','rf','qda','ada','gbc','lda','et','xgboost','lightgbm','catboost']
+reg_models = ['lr', 'lasso', 'ridge', 'en', 'lar', 'llar', 'omp', 'br', 'ard', 'par', 'ransac', 'tr', 'huber', 'kr', 'svm', 'knn', 'dt', 'rf', 'et', 'ada', 'gbr', 'mlp', 'xgboost', 'lightgbm', 'catboost']
 
 
+################ APP STYLING ################
 st.title("[Auto]ML")
+
+# Remove footer and streamlit hamburger
+hide_st_style = """
+            <style>
+            #MainMenu {visibility: hidden;}
+            footer {visibility: hidden;}
+            footer:after{content:'made by shehbeel arif'}
+            </style>
+            """
+st.markdown(hide_st_style, unsafe_allow_html=True)
+
+################ APP STYLING ################
+################################################################
+################ APP DEVELOPMENT #####################
+
 tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(["Upload", "Data Profiling", "Data Preprocessing", "Classification", "Regression", "Fine-Tune Model", "Clustering"])
+
 
 if os.path.exists('./dataset.csv'): 
     df = pd.read_csv('dataset.csv', index_col=None)
@@ -46,13 +66,14 @@ with tab1:
         df = pd.read_csv(file, index_col=None)
         df.to_csv('dataset.csv', index=None)
         st.dataframe(df)
-   
+
 with tab2:
     st.header("Exploratory Data Analysis")
     if st.button('Generate Report'):
         profile_df = df.profile_report()
         st_profile_report(profile_df)
     st.info('Warning! Only do this if dataset has small number of features.')
+
 
 with tab3:
     st.header("Data Preprocessing")
@@ -110,13 +131,63 @@ with tab3:
         st.subheader('Experiment Settings')
         st.dataframe(setup_df)
 
-    
+        # Custom Plots
+        class_labels = df[chosen_target]
+        #cols_remove = []
+        #cols_remove.append(ignore_features_result)
+        #cols_remove.append(chosen_target)
+        #_df = df.drop(cols_remove, axis=1)
+        _df = df.drop(ignore_features_result, axis=1)
+        _df = _df.drop(chosen_target, axis=1)
+
+
+        # Histogram Plot of Classes
+        #st.caption('Distribution of Classes')
+        hist_fig = px.histogram(df, x=chosen_target, title='Distribution of Classes', color=class_labels)
+        st.plotly_chart(hist_fig, 
+                        theme="streamlit", 
+                        use_container_width=True)
+
+        # UMAP Plot
+        umap = UMAP(n_components=2, init='random', random_state=0)
+        proj_umap = umap.fit_transform(_df)
+        umap_fig = px.scatter(proj_umap, x=0, y=1, title='UMAP Plot', color=class_labels)
+        st.plotly_chart(umap_fig, 
+                        theme="streamlit", 
+                        use_container_width=True)
+
+        # t-SNE Plot
+        # Initialize t-SNE object
+        # tsne = TSNE(n_components=2, random_state=0, learning_rate='auto')
+        # Fit and transform the data
+        # proj_tsne = tsne.fit_transform(_df)
+        # Plot t-SNE plot
+        # tsne_fig = px.scatter(proj_tsne, x=0, y=1, title='t-SNE Plot', color=class_labels)
+        # Display t-SNE plot on Streamlit
+        # st.plotly_chart(tsne_fig, 
+        #                 theme="streamlit", 
+        #                 use_container_width=True)
+
+        # PCA PLot
+        # Initialize PCA object
+        pca = PCA(n_components=2)
+        # Fit and transform the data
+        proj_pca = pca.fit_transform(_df)
+        # Plot PCA plot
+        pca_fig = px.scatter(proj_pca, x=0, y=1, title='PCA Plot', color=class_labels)
+        # Display PCA plot on Streamlit
+        st.plotly_chart(pca_fig, 
+                        theme="streamlit", 
+                        use_container_width=True)
+
+        # st.pyplot(class_eda(display_format='svg'))
+
 with tab4: 
     st.header("Classification")
     # chosen_target = st.selectbox('Choose the Target Column:', df.columns)
     # chosen_train_size = st.slider('Choose Size of Training Data:', min_value=0.0, max_value=1.0, step=0.01, value=0.7)
     # chosen_kfold = st.slider('Choose Number of k-folds:', min_value=2, max_value=10, value=5)
-    include_models = st.multiselect('Select Models to Test:', pycaret_models)
+    include_models = st.multiselect('Select Models to Test (Leave blank to test all available models):', clf_models)
     if st.button('Train Model'): 
     #     class_setup(df, target=chosen_target, silent=True, 
     #                 fold=chosen_kfold, 
@@ -132,8 +203,10 @@ with tab4:
     #     setup_df = class_pull()
     #     st.subheader('Experiment Settings')
     #     st.dataframe(setup_df)
+
         best_model = class_compare_models(include=include_models, 
-                                          turbo=True) #turbo=False #To evaluate all models available in library
+                                          turbo=False, # To evaluate all models available in library
+                                        )
         compare_df = class_pull()
         st.subheader("Machine Learning Models")
         st.dataframe(compare_df)
@@ -170,6 +243,12 @@ with tab4:
         st.set_option('deprecation.showPyplotGlobalUse', False)
         st.set_option('client.showErrorDetails', False)
 
+        # Evaluate Model
+        class_evaluate_model(best_model)
+
+
+
+
         st.info('Confusion Matrix')
         st.pyplot(class_plot_model(best_model, plot = 'confusion_matrix', display_format='streamlit'))
         st.info('Area Under the Curve (AUC)')
@@ -191,8 +270,23 @@ with tab4:
 
 with tab5:
     st. header('Regression')
-    st.info('Coming Soon...Till then, enjoy this picture of an owl')
-    st.image("https://static.streamlit.io/examples/owl.jpg", width=200)
+    include_reg_models = st.multiselect('Select Regression Models to Test:', reg_models)
+    if st.button('Train Regression Model'): 
+        reg_best_model = reg_compare_models(include=include_reg_models, 
+                                          turbo=True) #turbo=False #To evaluate all models available in library
+        reg_compare_df = reg_pull()
+        st.subheader("Regression Models")
+        st.dataframe(reg_compare_df)
+        st.caption("These are the parameters for the best regression model:")
+        reg_best_model # To see the model parameters of best model
+        #class_save_model(best_model, 'best_model')
+        #Finalize model:
+        final_reg_best_model = reg_finalize_model(reg_best_model)
+        st.download_button("Download Best Model",
+                            data=pickle.dumps(final_reg_best_model),
+                            file_name="reg-model.pkl",
+                            )
+
 
 with tab6:
     st.header("Fine-Tune Model")
@@ -200,7 +294,12 @@ with tab6:
     # st.subheader('Models available:')
     # all_models = class_models()
     # all_models_df = class_pull()
-    chosen_model = st.selectbox('Select an ML model:', pycaret_models)
+    fine_tune_task = st.selectbox('Type of model:', ['classification', 'regression'])
+    if fine_tune_task == 'classification':
+        chosen_model = st.selectbox('Select a classification model:', clf_models)
+    else:
+        chosen_model = st.selectbox('Select a regression model:', reg_models)
+    
     chosen_metric = st.selectbox('Select Metric to Optimize:', ['Accuracy','AUC','Recall','Precision','F1'])
     chosen_search_algorithm = st.selectbox('Choose Search Algorithm:', ['random', 'grid'])
     chosen_n_iters = st.slider('Choose number of iterations for hyperparameter tuning. The higher the iterations the better the model optimization, but will require more time.', min_value=1, max_value=100, step=1, value=10)
@@ -232,8 +331,16 @@ with tab6:
         st.caption("These are the parameters for the model tuner:")
         tuner
 
-        # Plot AUC
-        st.pyplot(class_plot_model(tuned_model, plot = 'auc', display_format='streamlit'))
+        # Make Plots
+        tree_models = ['dt', 'rf', 'et']
+        if chosen_model in tree_models:
+            st.pyplot(class_plot_model(tuned_model, plot = 'confusion_matrix', scale=4, display_format='streamlit'))
+            st.pyplot(class_plot_model(tuned_model, plot = 'auc', scale=4, display_format='streamlit'))
+            st.pyplot(class_plot_model(tuned_model, plot = 'pr', scale=4, display_format='streamlit'))
+            st.pyplot(class_plot_model(tuned_model, plot = 'feature', scale=4, display_format='streamlit'))
+        else:
+            st.pyplot(class_plot_model(tuned_model, plot = 'confusion_matrix', scale=4, display_format='streamlit'))
+            st.pyplot(class_plot_model(tuned_model, plot = 'auc', scale=4, display_format='streamlit'))            
 
         #Finalize model:
         final_tuned_model = class_finalize_model(tuned_model)
@@ -251,7 +358,6 @@ with tab6:
         st.dataframe(tuned_model_preds_df)
         # class_evaluate_model(tuned_model)
         # class_interpret_model(tuned_model)
-    
 
 with tab7:
     st.header("Clustering")
@@ -282,13 +388,15 @@ with tab7:
         distribution_plot = clust_plot_model(clust_model, plot = 'distribution', display_format='streamlit') #to see size of clusters  
         st.pyplot(distribution_plot)
 
-
-        
+################ APP DEVELOPMENT #####################
+################################################################
+################ RUN APP! ############################
 # st.info('Coming Soon...Till then, enjoy this picture of an owl')
 # st.image("https://static.streamlit.io/examples/owl.jpg", width=200)
 
 # st.info('Coming Soon...Till then, enjoy this picture of a dog')
 # st.image("https://static.streamlit.io/examples/dog.jpg", width=200)
 
-#streamlit run app.py
+# streamlit run app_v1.py
+
   
